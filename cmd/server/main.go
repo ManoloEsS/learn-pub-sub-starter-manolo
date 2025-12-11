@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("could not connect to RabbitMQ server %s: %s", rmqServer, err)
 	}
 	defer conn.Close()
-	fmt.Printf("Peril game server connecte to RabbitMq server %s\n", rmqServer)
+	fmt.Printf("Peril game server connected to RabbitMq server %s\n", rmqServer)
 
 	pubCh, err := conn.Channel()
 	if err != nil {
