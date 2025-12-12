@@ -31,7 +31,13 @@ func main() {
 	}
 
 	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, username)
-	_, queue, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.SimpleQueueTransient)
+	_, queue, err := pubsub.DeclareAndBind(
+		conn,
+		routing.ExchangePerilDirect,
+		queueName,
+		routing.PauseKey,
+		pubsub.SimpleQueueTransient,
+	)
 	if err != nil {
 		log.Fatalf("could not subscribe to pause: %v", err)
 	}
