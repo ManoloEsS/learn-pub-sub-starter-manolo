@@ -10,7 +10,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const rmqServer = "amqp://guest:guest@localhost:5672/"
+const (
+	rmqServer     = "amqp://guest:guest@localhost:5672/"
+	game_logs_key = "game_logs.*"
+)
 
 func main() {
 	fmt.Println("Starting Peril server...")
@@ -26,6 +29,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not create channel")
 	}
+
+	_, queue, err := pubsub.DeclareAndBind(
+		conn,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug,
+		game_logs_key,
+		pubsub.SimpleQueueDurable,
+	)
+	if err != nil {
+		log.Fatalf("could not subscribe to pause: %v", err)
+	}
+	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
 	gamelogic.PrintServerHelp()
 	for {
