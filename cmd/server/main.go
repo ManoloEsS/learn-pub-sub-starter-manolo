@@ -50,7 +50,7 @@ func main() {
 		}
 		switch input[0] {
 		case "pause":
-			log.Println("Publishing paused game state...")
+			fmt.Println("Publishing paused game state...")
 			err = pubsub.PublishJSON(
 				pubCh,
 				routing.ExchangePerilDirect,
@@ -62,7 +62,7 @@ func main() {
 			}
 			fmt.Println("Pause message sent!")
 		case "resume":
-			log.Println("Sending resume message...")
+			fmt.Println("Sending resume message...")
 			err = pubsub.PublishJSON(
 				pubCh,
 				routing.ExchangePerilDirect,

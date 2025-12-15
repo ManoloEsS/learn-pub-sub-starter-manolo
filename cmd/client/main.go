@@ -11,17 +11,20 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const rabbitConnString = "amqp://guest:guest@localhost:5672/"
-
 func main() {
+	const rabbitConnString = "amqp://guest:guest@localhost:5672/"
 	fmt.Println("Starting Peril client...")
 
 	conn, err := amqp.Dial(rabbitConnString)
 	if err != nil {
-		log.Fatalf("could not connect to RabbitMQ server %s: %s", rabbitConnString, err)
+		log.Fatalf(
+			"could not connect to RabbitMQ server %s: %s", rabbitConnString, err,
+		)
 	}
 	defer conn.Close()
-	fmt.Printf("Peril game server connected to RabbitMQ server %s\n", rabbitConnString)
+	fmt.Printf(
+		"Peril game server connected to RabbitMQ server %s\n", rabbitConnString,
+	)
 
 	username, err := gamelogic.ClientWelcome()
 	if err != nil {
@@ -43,6 +46,17 @@ func main() {
 	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
 	gameState := gamelogic.NewGameState(username)
+
+	err = pubsub.SubscribeJSON(conn,
+		routing.ExchangePerilDirect,
+		routing.PauseKey+"."+gameState.GetUsername(),
+		routing.PauseKey,
+		pubsub.SimpleQueueTransient,
+		handlerPause(gameState),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for {
 		input := gamelogic.GetInput()

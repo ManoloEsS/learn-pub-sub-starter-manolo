@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"encoding/json"
+	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -27,12 +28,15 @@ func SubscribeJSON[T any](
 	go func() {
 		for m := range newChann {
 			var target T
-			err := json.Unmarshal(m.Body, target)
-			if err != nil {
+			if err := json.Unmarshal(m.Body, &target); err != nil {
+				log.Printf("could not unmarshall %s: %s", m.Body, err)
 				continue
 			}
 			handler(target)
-			m.Ack(false)
+			if err := m.Ack(false); err != nil {
+				log.Printf("could not acknowledge %s: %s", m.Body, err)
+			}
+
 		}
 	}()
 
