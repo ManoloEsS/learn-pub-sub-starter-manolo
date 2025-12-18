@@ -19,6 +19,14 @@ const (
 	SimpleQueueTransient
 )
 
+type AckType int
+
+const (
+	Ack AckType = iota
+	NackRequeue
+	NackDiscard
+)
+
 // SubscribeJSON subscribes to a RabbitMQ queue and handles JSON messages of type T.
 func SubscribeJSON[T any](
 	conn *amqp.Connection,
@@ -26,7 +34,7 @@ func SubscribeJSON[T any](
 	queueName, // Queue name to create/consume from
 	key string, // Routing key for binding
 	queueType SimpleQueueType, // Queue persistence type
-	handler func(T), // Message handler function
+	handler func(T) AckType, // Message handler function
 ) error {
 	amqpChann, _, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
@@ -45,11 +53,24 @@ func SubscribeJSON[T any](
 				log.Printf("could not unmarshall %s: %s", m.Body, err)
 				continue
 			}
-			handler(target)
-			if err := m.Ack(false); err != nil {
-				log.Printf("could not acknowledge %s: %s", m.Body, err)
-			}
 
+			ackType := handler(target)
+			switch ackType {
+			case Ack:
+				err = m.Ack(false)
+				log.Printf("Positive acknowledgement of type %s", ackType.String())
+			case NackRequeue:
+				err = m.Nack(false, true)
+				log.Printf("Negative acknowledgement of type %s...requeueing", ackType.String())
+			case NackDiscard:
+				err = m.Nack(false, false)
+				log.Printf("Negative acknowledgement of type %s...discarding", ackType.String())
+			default:
+				log.Printf("Invalid acknowledge type %v: %v", ackType, err)
+			}
+			if err != nil {
+				log.Printf("Could not acknowledge message %s: %v", m.Body, err)
+			}
 		}
 	}()
 
@@ -102,5 +123,18 @@ func (s SimpleQueueType) String() string {
 		return "Transient"
 	default:
 		return fmt.Sprintf("Unknown(%d)", s)
+	}
+}
+
+func (a AckType) String() string {
+	switch a {
+	case Ack:
+		return "Ack"
+	case NackRequeue:
+		return "NackRequeue"
+	case NackDiscard:
+		return "NackDiscard"
+	default:
+		return fmt.Sprintf("Unknown(%d)", a)
 	}
 }
