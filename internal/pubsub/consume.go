@@ -1,3 +1,4 @@
+// Package pubsub provides functionality for RabbitMQ message publishing and consumption.
 package pubsub
 
 import (
@@ -8,20 +9,24 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// SimpleQueueType defines the persistence characteristics of a RabbitMQ queue.
 type SimpleQueueType int
 
 const (
+	// SimpleQueueDurable creates a queue that survives broker restarts
 	SimpleQueueDurable SimpleQueueType = iota
+	// SimpleQueueTransient creates a queue that is deleted when connection closes
 	SimpleQueueTransient
 )
 
+// SubscribeJSON subscribes to a RabbitMQ queue and handles JSON messages of type T.
 func SubscribeJSON[T any](
 	conn *amqp.Connection,
-	exchange,
-	queueName,
-	key string,
-	queueType SimpleQueueType,
-	handler func(T),
+	exchange, // Exchange name to bind to
+	queueName, // Queue name to create/consume from
+	key string, // Routing key for binding
+	queueType SimpleQueueType, // Queue persistence type
+	handler func(T), // Message handler function
 ) error {
 	amqpChann, _, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
@@ -51,12 +56,13 @@ func SubscribeJSON[T any](
 	return nil
 }
 
+// DeclareAndBind creates a RabbitMQ channel, declares a queue, and binds it to an exchange.
 func DeclareAndBind(
 	conn *amqp.Connection,
-	exchange,
-	queueName,
-	key string,
-	queueType SimpleQueueType,
+	exchange, // Exchange name
+	queueName, // Queue name
+	key string, // Routing key
+	queueType SimpleQueueType, // Queue persistence type
 ) (*amqp.Channel, amqp.Queue, error) {
 	chann, err := conn.Channel()
 	if err != nil {
@@ -87,6 +93,7 @@ func DeclareAndBind(
 	return chann, newQueue, nil
 }
 
+// String returns a human-readable representation of the queue type.
 func (s SimpleQueueType) String() string {
 	switch s {
 	case SimpleQueueDurable:

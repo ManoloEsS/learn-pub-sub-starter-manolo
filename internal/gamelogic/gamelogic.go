@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// PrintClientHelp displays the available commands for the game client.
 func PrintClientHelp() {
 	fmt.Println("Possible commands:")
 	fmt.Println("* move <location> <unitID> <unitID> <unitID>...")
@@ -25,6 +26,7 @@ func PrintClientHelp() {
 	fmt.Println("* help")
 }
 
+// ClientWelcome greets the player and prompts for username input.
 func ClientWelcome() (string, error) {
 	fmt.Println("Welcome to the Peril client!")
 	fmt.Println("Please enter your username:")
@@ -38,6 +40,7 @@ func ClientWelcome() (string, error) {
 	return username, nil
 }
 
+// PrintServerHelp displays the available commands for the game server.
 func PrintServerHelp() {
 	fmt.Println("Possible commands:")
 	fmt.Println("* pause")
@@ -46,6 +49,7 @@ func PrintServerHelp() {
 	fmt.Println("* help")
 }
 
+// GetInput reads and parses user input from stdin.
 func GetInput() []string {
 	fmt.Print("> ")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -58,6 +62,7 @@ func GetInput() []string {
 	return strings.Fields(line)
 }
 
+// GetMaliciousLog returns a random war-related quote for game logging.
 func GetMaliciousLog() string {
 	possibleLogs := []string{
 		"Never interrupt your enemy when he is making a mistake.",
@@ -72,10 +77,12 @@ func GetMaliciousLog() string {
 	return msg
 }
 
+// PrintQuit displays a humorous quit message when the player exits the game.
 func PrintQuit() {
 	fmt.Println("I hate this game! (╯°□°)╯︵ ┻━┻")
 }
 
+// CommandStatus displays the current game state including pause status and player units.
 func (gs *GameState) CommandStatus() {
 	if gs.isPaused() {
 		fmt.Println("The game is paused.")

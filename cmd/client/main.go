@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	// Connect to RabbitMQ server with default credentials
 	const rabbitConnString = "amqp://guest:guest@localhost:5672/"
 	fmt.Println("Starting Peril client...")
 
@@ -26,18 +27,22 @@ func main() {
 		"Peril game server connected to RabbitMQ server %s\n", rabbitConnString,
 	)
 
+	// Create channel for publishing messages
 	publishCh, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("could not create channel: %v", err)
 	}
 
+	// Get player username from interactive welcome prompt
 	username, err := gamelogic.ClientWelcome()
 	if err != nil {
 		log.Fatalf("could not get username: %v", err)
 	}
 
+	// Initialize game state for the player
 	gameState := gamelogic.NewGameState(username)
 
+	// Subscribe to army moves topic exchange for this player's moves
 	err = pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilTopic,
@@ -50,6 +55,7 @@ func main() {
 		log.Fatalf("could not subscribe to army moves: %v", err)
 	}
 
+	// Subscribe to pause/resume messages via direct exchange
 	err = pubsub.SubscribeJSON(conn,
 		routing.ExchangePerilDirect,
 		routing.PauseKey+"."+gameState.GetUsername(),
@@ -61,6 +67,7 @@ func main() {
 		log.Fatalf("could not subscribe to pause: %v", err)
 	}
 
+	// game loop REPL
 	for {
 		input := gamelogic.GetInput()
 		if len(input) == 0 {
@@ -80,6 +87,7 @@ func main() {
 				continue
 			}
 
+			// publish move to publish channel
 			err = pubsub.PublishJSON(publishCh,
 				string(routing.ExchangePerilTopic),
 				routing.ArmyMovesPrefix+"."+mv.Player.Username,
@@ -95,7 +103,7 @@ func main() {
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "spam":
-			//TODO: publish n malicious logs
+			// TODO: implement spam command to publish logs
 			fmt.Println("Spamming not allowed yet!")
 		case "quit":
 			gamelogic.PrintQuit()

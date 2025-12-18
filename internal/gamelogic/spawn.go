@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// CommandSpawn processes the spawn command to create new military units.
 func (gs *GameState) CommandSpawn(words []string) error {
 	if len(words) < 3 {
 		return errors.New("usage: spawn <location> <rank>")

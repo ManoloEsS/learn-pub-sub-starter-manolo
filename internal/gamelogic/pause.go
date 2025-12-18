@@ -6,6 +6,7 @@ import (
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 )
 
+// HandlePause processes pause/resume state changes from the server.
 func (gs *GameState) HandlePause(ps routing.PlayingState) {
 	defer fmt.Println("------------------------")
 	fmt.Println()

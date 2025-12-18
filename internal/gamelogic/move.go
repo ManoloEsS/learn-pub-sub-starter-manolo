@@ -6,14 +6,19 @@ import (
 	"strconv"
 )
 
+// MoveOutcome represents the result of an army movement action.
 type MoveOutcome int
 
 const (
+	// MoveOutcomeSamePlayer indicates the move was made by the current player
 	MoveOutcomeSamePlayer MoveOutcome = iota
+	// MoveOutComeSafe indicates the move doesn't result in conflict
 	MoveOutComeSafe
+	// MoveOutcomeMakeWar indicates the move results in war with another player
 	MoveOutcomeMakeWar
 )
 
+// HandleMove processes an army movement from another player and determines if it affects the current player.
 func (gs *GameState) HandleMove(move ArmyMove) MoveOutcome {
 	defer fmt.Println("------------------------")
 	player := gs.GetPlayerSnap()
@@ -38,6 +43,7 @@ func (gs *GameState) HandleMove(move ArmyMove) MoveOutcome {
 	return MoveOutComeSafe
 }
 
+// getOverlappingLocation finds a location where both players have units stationed.
 func getOverlappingLocation(p1 Player, p2 Player) Location {
 	for _, u1 := range p1.Units {
 		for _, u2 := range p2.Units {
@@ -49,6 +55,7 @@ func getOverlappingLocation(p1 Player, p2 Player) Location {
 	return ""
 }
 
+// CommandMove processes the move command from player input and creates an ArmyMove.
 func (gs *GameState) CommandMove(words []string) (ArmyMove, error) {
 	if gs.isPaused() {
 		return ArmyMove{}, errors.New("the game is paused, you can not move units")

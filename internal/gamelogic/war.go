@@ -4,16 +4,23 @@ import (
 	"fmt"
 )
 
+// WarOutcome represents the result of a war conflict.
 type WarOutcome int
 
 const (
+	// WarOutcomeNotInvolved indicates the player is not part of this war
 	WarOutcomeNotInvolved WarOutcome = iota
+	// WarOutcomeNoUnits indicates no units were in the same location
 	WarOutcomeNoUnits
+	// WarOutcomeYouWon indicates the player won the war
 	WarOutcomeYouWon
+	// WarOutcomeOpponentWon indicates the opponent won the war
 	WarOutcomeOpponentWon
+	// WarOutcomeDraw indicates the war ended in a draw
 	WarOutcomeDraw
 )
 
+// HandleWar processes a war declaration and determines the outcome based on unit power levels.
 func (gs *GameState) HandleWar(rw RecognitionOfWar) (outcome WarOutcome, winner string, loser string) {
 	defer fmt.Println("------------------------")
 	fmt.Println()
@@ -88,6 +95,7 @@ func (gs *GameState) HandleWar(rw RecognitionOfWar) (outcome WarOutcome, winner 
 	return WarOutcomeDraw, rw.Attacker.Username, rw.Defender.Username
 }
 
+// unitsToPowerLevel calculates the total combat power of a list of units.
 func unitsToPowerLevel(units []Unit) int {
 	power := 0
 	for _, unit := range units {

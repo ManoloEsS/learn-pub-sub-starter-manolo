@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	rmqServer     = "amqp://guest:guest@localhost:5672/"
-	game_logs_key = "game_logs.*"
+	rmqServer = "amqp://guest:guest@localhost:5672/"
 )
 
 func main() {
+	// Start server and connect to RabbitMQ
 	fmt.Println("Starting Peril server...")
 
 	conn, err := amqp.Dial(rmqServer)
@@ -25,16 +25,18 @@ func main() {
 	defer conn.Close()
 	fmt.Printf("Peril game server connected to RabbitMq server %s\n", rmqServer)
 
+	// Create channel
 	pubCh, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("could not create channel")
 	}
 
+	// Bind to topic pause exchange
 	_, queue, err := pubsub.DeclareAndBind(
 		conn,
 		routing.ExchangePerilTopic,
 		routing.GameLogSlug,
-		game_logs_key,
+		routing.GameLogSlug+".*",
 		pubsub.SimpleQueueDurable,
 	)
 	if err != nil {
@@ -42,6 +44,7 @@ func main() {
 	}
 	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
+	// Start server REPL
 	gamelogic.PrintServerHelp()
 	for {
 		input := gamelogic.GetInput()

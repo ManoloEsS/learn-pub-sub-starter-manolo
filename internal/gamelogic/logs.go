@@ -9,10 +9,10 @@ import (
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 )
 
-const logsFile = "game.log"
+const logsFile = "game.log"              // Log file name for game events
+const writeToDiskSleep = 1 * time.Second // Simulated delay for log writing
 
-const writeToDiskSleep = 1 * time.Second
-
+// WriteLog writes a game log entry to disk with a timestamp and user information.
 func WriteLog(gamelog routing.GameLog) error {
 	log.Printf("received game log...")
 	time.Sleep(writeToDiskSleep)

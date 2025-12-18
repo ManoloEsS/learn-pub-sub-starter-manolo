@@ -8,6 +8,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// PublishJSON marshals a value to JSON and publishes it to a RabbitMQ exchange.
 func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	jsonVal, err := json.Marshal(val)
 	if err != nil {
