@@ -91,11 +91,16 @@ func DeclareAndBind(
 	}
 
 	var newQueue amqp.Queue
+
 	switch queueType {
 	case SimpleQueueDurable:
-		newQueue, err = chann.QueueDeclare(queueName, true, false, false, false, nil)
+		newQueue, err = chann.QueueDeclare(queueName, true, false, false, false, amqp.Table{
+			"x-dead-letter-exchange": "peril_dlx",
+		})
 	case SimpleQueueTransient:
-		newQueue, err = chann.QueueDeclare(queueName, false, true, true, false, nil)
+		newQueue, err = chann.QueueDeclare(queueName, false, true, true, false, amqp.Table{
+			"x-dead-letter-exchange": "peril_dlx",
+		})
 	default:
 		return nil, amqp.Queue{}, fmt.Errorf("invalid queue type: %v", queueType)
 	}
