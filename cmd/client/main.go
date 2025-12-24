@@ -46,17 +46,18 @@ func main() {
 	err = pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilTopic,
-		routing.ArmyMovesPrefix+"."+username,
+		routing.ArmyMovesPrefix+"."+gameState.GetUsername(),
 		routing.ArmyMovesPrefix+".*",
 		pubsub.SimpleQueueTransient,
-		handlerMove(gameState),
+		handlerMove(gameState, publishCh),
 	)
 	if err != nil {
 		log.Fatalf("could not subscribe to army moves: %v", err)
 	}
 
 	// Subscribe to pause/resume messages via direct exchange
-	err = pubsub.SubscribeJSON(conn,
+	err = pubsub.SubscribeJSON(
+		conn,
 		routing.ExchangePerilDirect,
 		routing.PauseKey+"."+gameState.GetUsername(),
 		routing.PauseKey,
@@ -67,6 +68,14 @@ func main() {
 		log.Fatalf("could not subscribe to pause: %v", err)
 	}
 
+	err = pubsub.SubscribeJSON(
+		conn,
+		routing.ExchangePerilTopic,
+		string(routing.WarRecognitionsPrefix),
+		routing.WarRecognitionsPrefix+".*",
+		pubsub.SimpleQueueDurable,
+		handlerWar(gameState, publishCh),
+	)
 	// game loop REPL
 	for {
 		input := gamelogic.GetInput()
