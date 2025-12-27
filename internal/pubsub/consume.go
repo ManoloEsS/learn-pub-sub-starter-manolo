@@ -2,6 +2,8 @@
 package pubsub
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -27,14 +29,14 @@ const (
 	NackDiscard
 )
 
-// SubscribeJSON subscribes to a RabbitMQ queue and handles JSON messages of type T.
-func SubscribeJSON[T any](
+func subscribe[T any](
 	conn *amqp.Connection,
 	exchange, // Exchange name to bind to
 	queueName, // Queue name to create/consume from
 	key string, // Routing key for binding
 	queueType SimpleQueueType, // Queue persistence type
 	handler func(T) AckType, // Message handler function
+	unmarshaller func([]byte) (T, error),
 ) error {
 	amqpChann, _, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
@@ -48,8 +50,8 @@ func SubscribeJSON[T any](
 
 	go func() {
 		for m := range newChann {
-			var target T
-			if err := json.Unmarshal(m.Body, &target); err != nil {
+			target, err := unmarshaller(m.Body)
+			if err != nil {
 				log.Printf("could not unmarshall %s: %s", m.Body, err)
 				continue
 			}
@@ -74,6 +76,37 @@ func SubscribeJSON[T any](
 		}
 	}()
 
+	return nil
+}
+
+// SubscribeJSON subscribes to a RabbitMQ queue and handles JSON messages of type T.
+func SubscribeJSON[T any](
+	conn *amqp.Connection,
+	exchange, // Exchange name to bind to
+	queueName, // Queue name to create/consume from
+	key string, // Routing key for binding
+	queueType SimpleQueueType, // Queue persistence type
+	handler func(T) AckType, // Message handler function
+) error {
+	err := subscribe(conn, exchange, queueName, key, queueType, handler, unmarshalJSON)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SubscribeGob[T any](
+	conn *amqp.Connection,
+	exchange, // Exchange name to bind to
+	queueName, // Queue name to create/consume from
+	key string, // Routing key for binding
+	queueType SimpleQueueType, // Queue persistence type
+	handler func(T) AckType, // Message handler function
+) error {
+	err := subscribe(conn, exchange, queueName, key, queueType, handler, unmarshalGob)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -142,4 +175,22 @@ func (a AckType) String() string {
 	default:
 		return fmt.Sprintf("Unknown(%d)", a)
 	}
+}
+
+func unmarshalJSON[T any](source []byte) (T, error) {
+	var target T
+	if err := json.Unmarshal(source, &target); err != nil {
+		return target, fmt.Errorf("could not unmarshall %s: %s", source, err)
+	}
+	return target, nil
+}
+
+func unmarshalGob[T any](source []byte) (T, error) {
+	var target T
+	sourceStream := bytes.NewReader(source)
+	if err := gob.NewDecoder(sourceStream).Decode(&target); err != nil {
+		return target, fmt.Errorf("could not decode %s: %w", source, err)
+	}
+
+	return target, nil
 }
