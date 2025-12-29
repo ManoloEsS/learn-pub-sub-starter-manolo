@@ -43,6 +43,10 @@ func subscribe[T any](
 		return err
 	}
 
+	err = amqpChann.Qos(10, 0, true)
+	if err != nil {
+		return err
+	}
 	newChann, err := amqpChann.Consume(queueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err

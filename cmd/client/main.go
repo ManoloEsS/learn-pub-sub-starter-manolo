@@ -114,14 +114,14 @@ func main() {
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "spam":
-			// TODO: implement spam command to publish logs
 			if len(input) < 2 {
 				fmt.Println("usage: spam [amount]")
 				continue
 			}
 			amount, err := strconv.Atoi(input[1])
 			if err != nil {
-				fmt.Printf("%s is not a valid number", input[1])
+				fmt.Printf("error: %s is not a valid number\n", input[1])
+				continue
 			}
 			for range amount {
 				maliciousLog := routing.GameLog{
@@ -129,13 +129,14 @@ func main() {
 					Message:     gamelogic.GetMaliciousLog(),
 					Username:    gameState.GetUsername(),
 				}
-				_ = pubsub.PublishJSON(
+				_ = pubsub.PublishGob(
 					publishCh,
 					routing.ExchangePerilTopic,
 					routing.GameLogSlug+"."+gameState.GetUsername(),
 					maliciousLog,
 				)
 			}
+			fmt.Printf("Published %v malicious logs\n", amount)
 
 		case "quit":
 			gamelogic.PrintQuit()
